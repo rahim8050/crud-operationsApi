@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Http\Resources\PostResource;
+use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
@@ -20,6 +23,24 @@ class PostController extends Controller
     public function store(Request $request)
     {
         //
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'body' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $post = Post::create($request->all());
+
+        return response()->json(
+            [
+                'message' => 'Post created successfully',
+                'data' => new PostResource($post),
+                'status' => true,
+            ],
+            201
+        );
     }
 
     /**
@@ -27,7 +48,25 @@ class PostController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json(
+                [
+                    'message' => 'Post not found',
+                    'status' => false,
+                ],
+                404
+            );
+        }
+
+        return response()->json(
+            [
+                'message' => 'Post retrieved successfully',
+                'data' => new PostResource($post),
+                'status' => true,
+            ],
+            200
+        );
     }
 
     /**
@@ -35,7 +74,35 @@ class PostController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json(
+                [
+                    'message' => 'Post not found',
+                    'status' => false,
+                ],
+                404
+            );
+        }
+
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'body' => 'required|string|max:255',
+        ]);
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+        $post = Post::find($id);
+        $post->update($request->all());
+
+        return response()->json(
+            [
+                'message' => 'Post updated successfully',
+                'data' => new PostResource($post),
+                'status' => true,
+            ],
+            200
+        );
     }
 
     /**
@@ -43,6 +110,25 @@ class PostController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $post = Post::find($id);
+        if (!$post) {
+            return response()->json(
+                [
+                    'message' => 'Post not found',
+                    'status' => false,
+                ],
+                404
+            );
+        }
+
+        $post->delete();
+
+        return response()->json(
+            [
+                'message' => 'Post deleted successfully',
+                'status' => true,
+            ],
+            200
+        );
     }
 }
